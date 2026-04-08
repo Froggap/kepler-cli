@@ -1,0 +1,5 @@
+.env
+/prompts/generate_summary.md
+test.py
+.venv/
+commits.json
