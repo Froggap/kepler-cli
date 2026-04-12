@@ -21,18 +21,5 @@ class Config:
     
     @staticmethod
     def get_model_name() -> str:
-        return os.getenv("GEMINI_MODEL", "gemini-2.0-flash-exp")
+        return os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     
-    @staticmethod
-    def get_github_token() -> str:
-        token = os.getenv("GITHUB_TOKEN")
-        if not token:
-            raise ValueError(
-                "GITHUB_TOKEN no configurado. "
-                "Agrégalo a tu archivo .env"
-            )
-        return token
-    
-    @staticmethod
-    def has_github_token() -> bool:
-        return bool(os.getenv("GITHUB_TOKEN"))

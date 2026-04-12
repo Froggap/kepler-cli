@@ -3,3 +3,8 @@
 test.py
 .venv/
 commits.json
+reporte.md
+
+__pycache__/
+*.pyc
+*.pyo

@@ -1,9 +1,9 @@
 import json
-import google as genai 
+from google import genai
 from pathlib import Path
 from typing import List, Dict, Optional
 from datetime import datetime
-from utils.config import Config
+from config.config import Config
 
 
 class AIReportService:
@@ -12,8 +12,8 @@ class AIReportService:
     PROMPT_PATH = Path("prompts/generate_summary.md")
 
     def __init__(self):
-        genai.configure(api_key=Config.get_api_key())
-        self.model = genai.GenerativeModel(Config.get_model_name())
+        self.client = genai.Client(api_key=Config.get_api_key())
+        self.model_name = Config.get_model_name()
 
     def generate_report(
         self,
@@ -22,17 +22,18 @@ class AIReportService:
         employee_name: str = "Colaborador",
         month: Optional[int] = None,
         year: Optional[int] = None,
+        project_name: Optional[str] = None,
     ) -> Dict:
         month = month or datetime.now().month
         year = year or datetime.now().year
 
-        # Preparar datos
-        period_month  = self._format_period(month, year)
-        commits_data  = self._format_commits(commits)
-        work_days     = self._count_work_days(commits)
+        from utils.date_util import _format_period
+
+        period_month   = _format_period(month, year)
+        commits_data   = self._format_commits(commits)
+        work_days      = self._count_work_days(commits)
         files_modified = self._count_files(commits)
 
-        # Leer y rellenar el prompt
         prompt = self._load_prompt(
             company_name   = company_name,
             employee_name  = employee_name,
@@ -41,40 +42,36 @@ class AIReportService:
             total_commits  = len(commits),
             work_days      = work_days,
             files_modified = files_modified,
+            project_name   = project_name,
         )
 
-        response = self.model.generate_content(prompt)
+        response = self.client.models.generate_content(
+            model=self.model_name,
+            contents=prompt,
+        )
         return self._parse_response(response.text)
 
-
     def _load_prompt(self, **kwargs) -> str:
-        """Lee el archivo .md y reemplaza los placeholders con los datos reales."""
         if not self.PROMPT_PATH.exists():
             raise FileNotFoundError(f"No se encontró el prompt en: {self.PROMPT_PATH}")
-
         template = self.PROMPT_PATH.read_text(encoding="utf-8")
-        return template.format(**kwargs)
+    
+        for key, value in kwargs.items():
+            template = template.replace("{" + key + "}", str(value))
 
-    def _format_period(self, month: int, year: int) -> str:
-        months_es = [
-            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-        ]
-        return f"{months_es[month - 1]} del {year}"
+        return template
 
     def _format_commits(self, commits: List[Dict]) -> str:
         if not commits:
             return "No se encontraron commits en el período."
-
         lines = []
         for commit in commits:
-            date    = commit.get("date", "")[:10]
-            author  = commit.get("author", "")
-            message = commit.get("message", "").split("\n")[0]
-            files   = commit.get("files", [])
+            date      = commit.get("date", "")[:10]
+            author    = commit.get("author", "")
+            message   = commit.get("message", "").split("\n")[0]
+            files     = commit.get("files", [])
             files_str = ", ".join(files[:5]) if files else "Sin archivos"
             lines.append(f"- [{date}] {author}: {message} | Archivos: {files_str}")
-
         return "\n".join(lines)
 
     def _count_work_days(self, commits: List[Dict]) -> int:
@@ -94,7 +91,6 @@ class AIReportService:
         return len(files)
 
     def _parse_response(self, raw: str) -> Dict:
-        """Limpia el markdown de la respuesta y parsea el JSON."""
         clean = raw.strip()
         if clean.startswith("```"):
             clean = clean.split("```")[1]

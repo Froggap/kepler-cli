@@ -5,11 +5,29 @@ from rich.prompt import Prompt
 from rich import box
 import subprocess
 from pathlib import Path
+from prompt_toolkit import PromptSession
+import sys
 
 console = Console()
 permissions_granted = False
 current_directory = Path.home()
 ALLOWED_COMMANDS = {"dir", "ls", "cd", "tree", "type", "echo", "cls", "clear", "pwd"}
+
+
+def _format_prompt_path(path: Path) -> str:
+    """Formatea la ruta para mostrarla de forma compacta en el prompt."""
+    try:
+        home = Path.home().resolve()
+        resolved = path.resolve()
+        relative = resolved.relative_to(home)
+        return "~" if str(relative) == "." else f"~\\{relative}"
+    except ValueError:
+        return str(path)
+
+
+def _build_cli_prompt() -> str:
+    """Construye el prompt interactivo del CLI."""
+    return f"[Kepler] {_format_prompt_path(current_directory)} $ "
 
 
 def show_banner():
@@ -51,12 +69,12 @@ def show_commands_table():
     table.add_row(
         "generate",
         "Genera un reporte mensual de actividades en Word",
-        "kepler generate",
+        "generate",
     )
-    table.add_row("config", "Muestra la configuración actual del CLI", "kepler config")
-    table.add_row("version", "Muestra la versión de la herramienta", "kepler version")
+    table.add_row("config", "Muestra la configuración actual del CLI", "config")
+    table.add_row("version", "Muestra la versión de la herramienta", "version")
     table.add_row(
-        "help", "Muestra ayuda detallada de un comando", "kepler generate --help"
+        "help", "Muestra ayuda detallada de un comando", "help"
     )
 
     console.print(table)
@@ -64,20 +82,52 @@ def show_commands_table():
 
 def show_cli_help():
     """Muestra ayuda general desde el menu interactivo."""
-    console.print("\n[bold cyan]Ayuda de Kepler[/bold cyan]\n")
-    console.print(
-        "Puedes ejecutar los comandos del CLI o algunos comandos seguros del sistema "
-        "desde este menu interactivo.\n"
+    cli_table = Table(box=box.SIMPLE, show_header=False, padding=(0, 2))
+    cli_table.add_column("Comando", style="bold green", width=12)
+    cli_table.add_column("Descripción", style="white")
+
+    cli_table.add_row(
+        "generate",
+        "Genera el reporte mensual en Word.\n"
+        "[dim]Opciones:[/dim]\n"
+        "  [yellow]--branch, -b[/yellow]   Rama específica a analizar\n"
+        "  [yellow]--days, -d[/yellow]     Días hacia atrás a analizar [dim](default: 7)[/dim]\n"
+        "  [yellow]--author, -a[/yellow]   Filtrar commits por autor\n"
+        "  [yellow]--since, -s[/yellow]    Fecha inicio [dim](YYYY-MM-DD)[/dim]\n"
+        "  [yellow]--until, -u[/yellow]    Fecha fin [dim](YYYY-MM-DD)[/dim]\n"
+        "  [yellow]--detailed[/yellow]     Incluir análisis detallado con IA (Más adelante)\n"
+        "  [yellow]--remote[/yellow]       Obtener commits desde remoto (Más adelante)"
     )
-    console.print("[bold]generate[/bold] - Genera el reporte mensual.")
-    console.print("[bold]config[/bold] - Muestra la configuracion actual.")
-    console.print("[bold]version[/bold] - Muestra la version de la herramienta.")
+    cli_table.add_row("config",   "Muestra la configuración actual.")
+    cli_table.add_row("version",  "Muestra la versión de la herramienta.")
+    cli_table.add_row("help",     "Muestra esta ayuda.")
+    cli_table.add_row("exit",     "Sale del CLI.")
+
+    sys_table = Table(box=box.SIMPLE, show_header=False, padding=(0, 2))
+    sys_table.add_column("Comando", style="bold yellow", width=12)
+    sys_table.add_column("Descripción", style="white")
+
+    sys_table.add_row("cd <ruta>", "Navega a una carpeta.")
+    sys_table.add_row("dir / ls",  "Lista archivos del directorio actual.")
+    sys_table.add_row("tree",      "Muestra árbol de carpetas.")
+    sys_table.add_row("pwd",       "Muestra la ruta actual.")
+    sys_table.add_row("cls / clear","Limpia la pantalla.")
+
+    console.print()
+    console.print(Panel(
+        cli_table,
+        title="[bold cyan]⚡ Comandos Kepler[/bold cyan]",
+        border_style="cyan",
+        padding=(1, 2),
+    ))
+    console.print(Panel(
+        sys_table,
+        title="[bold yellow]🖥️  Comandos del sistema[/bold yellow]",
+        border_style="yellow",
+        padding=(1, 2),
+    ))
     console.print(
-        "[bold]help[/bold] - Muestra esta ayuda general del menu de bienvenida."
-    )
-    console.print(
-        "\n[dim]Comandos de sistema permitidos:[/dim] "
-        + ", ".join(sorted(ALLOWED_COMMANDS))
+        "[dim]  💡 Tip: Usa Ctrl+C dos veces para salir en cualquier momento.[/dim]\n"
     )
 
 
@@ -116,6 +166,8 @@ def request_permissions():
         console.print(
             "[bold red]❌ Permisos denegados. No podrás usar las funciones de navegación.[/bold red]"
         )
+        sys.exit(0)
+        
     console.print()
     return response
 
@@ -136,7 +188,9 @@ def execute_terminal_command(cmd: str):
     parts = cmd.split(maxsplit=1)
     base_cmd = parts[0].lower()
     if base_cmd in ["config", "version", "help", "generate"]:
-      handle_menu_choice(base_cmd)
+      parts=cmd.split()
+      extra_args = parts[1:]
+      handle_menu_choice(base_cmd, extra_args)
       return
 
     if base_cmd == "cd":
@@ -188,8 +242,9 @@ def execute_terminal_command(cmd: str):
         return
     if base_cmd == "ls":
         command = "dir " + (parts[1] if len(parts) > 1 else "")
-    if base_cmd == "clear":
-        command = "cls"
+    if base_cmd in ("cls", "clear"):
+        console.clear()
+        return
     try:
         result = subprocess.run(
             command,
@@ -207,10 +262,9 @@ def execute_terminal_command(cmd: str):
         console.print(f"[bold red]❌ Error:[/bold red]\n{error}")
 
 
-def handle_menu_choice(choice: str):
+def handle_menu_choice(choice: str, extra_args: list = []):
     """Maneja la elección del usuario."""
     from cli.commands import app
-    
 
     console.print(f"\n[bold cyan]Ejecutando comando: {choice}[/bold cyan]\n")
 
@@ -223,7 +277,7 @@ def handle_menu_choice(choice: str):
     elif choice == "generate":
         app(
             prog_name="kepler",
-            args=["generate", "--working-dir", str(current_directory)],
+            args=["generate", "--working-dir", str(current_directory)] + extra_args,
             standalone_mode=False,
         )
 
@@ -241,25 +295,43 @@ def show_welcome_menu():
 
     console.print()
 
-    # Menú interactivo
+    _ctrl_c_count = 0
     while True:
         console.print()
 
-        from utils.config import Config
+        from config.config import Config
 
         if not Config.has_api_key():
             console.print(
                 "[bold red]⚠️  API Key no configurada. Por favor, configura tu API Key para usar la herramienta.[/bold red]"
             )
-            command = Prompt.ask(
+            try:
+                command = Prompt.ask(
                 "¿Quieres configurar tu API Key ahora?",
                 choices=["config", "version", "help", "generate"],
-                default="config",
-            )
+                default="config",)
+            except KeyboardInterrupt:
+                console.print("\n[dim]Usa 'exit' o cierra la terminal para salir.[/dim]")
+                continue
+
         else:
             session = PromptSession()
-            command = session.prompt(f"[{current_directory}] $ ")
-
+            try:
+                command = session.prompt(_build_cli_prompt())
+                _ctrl_c_count = 0
+            except KeyboardInterrupt:
+                _ctrl_c_count += 1
+                if _ctrl_c_count >= 2:
+                    console.print("\n[bold cyan]👋 ¡Hasta luego![/bold cyan]")
+                    break
+                console.print("\n[dim]Presiona Ctrl+C de nuevo para salir.[/dim]")
+                continue
+            except EOFError:
+                console.print("\n[bold cyan]👋 ¡Hasta luego![/bold cyan]")
+                break
+        if command.strip().lower() in ("exit", "quit", "q"):
+            console.print("\n[bold cyan]👋 ¡Hasta luego![/bold cyan]")
+            break
         execute_terminal_command(command)
         console.print()
 

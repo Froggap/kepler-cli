@@ -1,3 +1,5 @@
+ ![demo](.github/assets/image.png)    
+
 # 🚀 Kepler CLI
 
 A custom CLI tool to generate professional monthly work reports from your Git activity using AI.
@@ -11,9 +13,9 @@ Kepler CLI is a command-line tool designed to:
 * Navigate your local file system safely
 * Detect and work with Git repositories
 * Extract commit history
-* Transform commits into structured data (JSON)
-* Generate monthly reports (future feature)
-* Use AI to enhance and summarize development activity (in progress)
+* Transform commits into structured data (JSON) using AI
+* Generate monthly reports in Markdown (`.md`)
+* Use AI to enhance and summarize development activity
 
 ---
 
@@ -26,15 +28,46 @@ Kepler CLI is a command-line tool designed to:
 * Safe terminal command execution
 * Directory navigation (`cd`, `ls`, `pwd`, etc.)
 * Permission control for system access
-* Git commit extraction (basic)
-* JSON generation from commits
+* Git commit extraction
+* AI integration for commit analysis and summarizing
+* **Monthly report generation in Markdown (`.md`)**
 
 ### 🚧 In Progress
 
-* AI prompt generation
-* Integration with AI model
 * Automatic report generation (Word / PDF)
-* Smart summaries of commits
+* Smart filtering of commits
+
+---
+
+## 🛠️ Environment Setup
+
+Before running the CLI, you need to set up your environment variables. Create a `.env` file in the root directory:
+
+```env
+# Google Gemini API Key (Required)
+GEMINI_API_KEY=your_api_key_here
+
+# AI Model Configuration (Optional, defaults to gemini-2.5-flash)
+GEMINI_MODEL=gemini-2.5-flash
+
+# Report Information (Optional)
+COMPANY_NAME=Your Company
+PROJECT_NAME=Project Name
+EMPLOYEE_NAME=Your Name
+```
+
+---
+
+## 📝 Configuration & Prompts
+
+### ⚙️ System Config
+The project uses a structured configuration system located in `config/`. It handles API authentication, model selection, and default report values via environment variables.
+
+### 🧠 AI Prompts
+The core logic for report generation relies on Markdown templates. 
+* **Default Prompt:** The system reads from `prompts/generate_summary.md` by default. **You must ensure this file exists.**
+* **Customization:** You can modify this file to change how the AI summarizes your commits, the tone of the report, or the specific sections required. 
+* **Variables:** The prompt template supports dynamic placeholders like `{commits_data}`, `{period_month}`, and `{company_name}` which are replaced during execution.
 
 ---
 
@@ -55,25 +88,32 @@ Kepler CLI is a command-line tool designed to:
 cli-kepler/
 ├── cli/
 │   ├── welcome.py
-│   ├── commands.py
-│   └── ...
+│   └── commands.py
+├── config/
+│   ├── config.py
+│   └── prompt_config.py
+├── prompts/
+│   └── generate_summary.md
+├── service/
+│   └── ai_service.py
 ├── utils/
-│   └── config.py
+│   ├── date_util.py
+│   ├── git_util.py
+│   └── write_markdown.py
 ├── main.py
-├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## 🧠 How It Works (Concept)
+## 🧠 How It Works
 
 1. User navigates to a project directory
 2. CLI detects Git repository
-3. Extracts commit history
-4. Converts commits into structured data
-5. Sends data to AI model (planned)
-6. Generates a professional report
+3. Extracts commit history from the specified period
+4. Processes commits and sends them to Gemini AI using the template in `prompts/generate_summary.md`
+5. AI generates a structured summary (JSON)
+6. CLI converts the data into a professional Markdown report (`.md`)
 
 ---
 
@@ -94,6 +134,9 @@ venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Set up your .env file
+# (Create manually or copy from an example if available)
 ```
 
 ---
@@ -116,17 +159,18 @@ generate
 ## 📌 Notes
 
 * The CLI only executes **safe read-only commands**
-* No files are modified
+* No source files are modified
 * Works best inside a Git repository
 
 ---
 
 ## 🔮 Future Plans
 
-* AI-powered summaries of commits
 * Export reports to Word / PDF
 * Multi-language support
 * Better terminal UX (autocomplete, history)
+* Switch IA models
+* Generate and send reports by email
 
 ---
 
@@ -138,4 +182,6 @@ Built by Froggap 🚀
 
 ## 📄 License
 
-MIT License
+MIT License © 2026 Froggap
+
+Free to use, modify and distribute with attribution.
