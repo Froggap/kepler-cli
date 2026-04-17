@@ -1,7 +1,10 @@
 import json
-from google import genai
+import time
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
+from google import genai
+from google.genai import errors, types
 from datetime import datetime
 from config.config import Config
 
@@ -10,6 +13,8 @@ class AIReportService:
     """Servicio para generar reportes mensuales usando Gemini."""
 
     PROMPT_PATH = Path("prompts/generate_summary.md")
+    MAX_RETRIES = 5
+    INITIAL_BACKOFF_SECONDS = 2
 
     def __init__(self):
         self.client = genai.Client(api_key=Config.get_api_key())
@@ -45,11 +50,33 @@ class AIReportService:
             project_name   = project_name,
         )
 
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=prompt,
-        )
+        response = self._generate_with_retry(prompt)
         return self._parse_response(response.text)
+
+    def _generate_with_retry(self, prompt: str):
+        last_error = None
+
+        for attempt in range(1, self.MAX_RETRIES + 1):
+            try:
+                return self.client.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.3,
+                    ),
+                )
+            except errors.ServerError as exc:
+                last_error = exc
+                if attempt == self.MAX_RETRIES:
+                    break
+                backoff = self.INITIAL_BACKOFF_SECONDS * (2 ** (attempt - 1))
+                time.sleep(backoff)
+
+        raise RuntimeError(
+            "Gemini esta temporalmente saturado y no pudo generar el reporte "
+            f"despues de {self.MAX_RETRIES} intentos. Intenta nuevamente en unos minutos."
+        ) from last_error
 
     def _load_prompt(self, **kwargs) -> str:
         if not self.PROMPT_PATH.exists():

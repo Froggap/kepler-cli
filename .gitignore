@@ -1,7 +1,10 @@
 .env
+
 /prompts/generate_summary.md
+/config/config_impl.py
 test.py
 .venv/
+
 commits.json
 reporte.md
 

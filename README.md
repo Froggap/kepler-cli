@@ -14,7 +14,7 @@ Kepler CLI is a command-line tool designed to:
 * Detect and work with Git repositories
 * Extract commit history
 * Transform commits into structured data (JSON) using AI
-* Generate monthly reports in Markdown (`.md`)
+* Generate monthly reports in Word (`.docx`)
 * Use AI to enhance and summarize development activity
 
 ---
@@ -30,11 +30,10 @@ Kepler CLI is a command-line tool designed to:
 * Permission control for system access
 * Git commit extraction
 * AI integration for commit analysis and summarizing
-* **Monthly report generation in Markdown (`.md`)**
+* **Monthly report generation in Word (`.docx`)**
 
 ### 🚧 In Progress
 
-* Automatic report generation (Word / PDF)
 * Smart filtering of commits
 
 ---
@@ -61,7 +60,7 @@ EMPLOYEE_NAME=Your Name
 ## 📝 Configuration & Prompts
 
 ### ⚙️ System Config
-The project uses a structured configuration system located in `config/`. It handles API authentication, model selection, and default report values via environment variables.
+The project uses a structured configuration system located in `config/`. It handles API authentication, model selection, and report settings. Environment variables are supported for development, and persistent configuration support is available through `config_impl.py`.
 
 ### 🧠 AI Prompts
 The core logic for report generation relies on Markdown templates. 
@@ -113,7 +112,7 @@ cli-kepler/
 3. Extracts commit history from the specified period
 4. Processes commits and sends them to Gemini AI using the template in `prompts/generate_summary.md`
 5. AI generates a structured summary (JSON)
-6. CLI converts the data into a professional Markdown report (`.md`)
+6. CLI converts the data into a professional Word report (`.docx`)
 
 ---
 
@@ -154,6 +153,18 @@ cd your-project
 generate
 ```
 
+Generated artifacts:
+
+```bash
+commits.json
+reporte_<mes>_<año>.docx
+```
+
+Current additions related to report generation:
+
+* `config/config_impl.py`
+* `service/word_service.py`
+
 ---
 
 ## 📌 Notes
@@ -166,7 +177,6 @@ generate
 
 ## 🔮 Future Plans
 
-* Export reports to Word / PDF
 * Multi-language support
 * Better terminal UX (autocomplete, history)
 * Switch IA models

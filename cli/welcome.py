@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 from prompt_toolkit import PromptSession
 import sys
+from cli.app_info import VERSION
 
 console = Console()
 permissions_granted = False
@@ -32,7 +33,7 @@ def _build_cli_prompt() -> str:
 
 def show_banner():
     """Muestra el banner de bienvenida."""
-    banner = """
+    banner = f"""
     ╔═══════════════════════════════════════════════════════════╗
     ║                                                           ║
     ║   ██╗  ██╗███████╗██████╗ ██╗     ███████╗██████╗        ║
@@ -43,7 +44,7 @@ def show_banner():
     ║   ╚═╝  ╚═╝╚══════╝╚═╝     ╚══════╝╚══════╝╚═╝  ╚═╝       ║
     ║                                                           ║
     ║          Generador de Reportes Mensuales con IA          ║
-    ║                      v1.0.0                               ║
+    ║                      v{VERSION}                               ║
     ╚═══════════════════════════════════════════════════════════╝
     """
     console.print(banner, style="bold cyan")

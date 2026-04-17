@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import Optional
 import subprocess
 import json
-
+import re
+from cli.app_info import APP_DESCRIPTION, APP_NAME, VERSION
 
 app = typer.Typer(
     name="cli-kepler",
@@ -166,23 +167,27 @@ def generate_content(
             report_data = service.generate_report(
                 commits=data,
                 company_name=ReportConfig.COMPANY_NAME,
-                employee_name=author or ReportConfig.EMPLOYEE_NAME,
+                employee_name= author or ReportConfig.EMPLOYEE_NAME,
                 month=month,
                 year=year,
                 project_name=project_name or ReportConfig.PROJECT_NAME,
             )
 
-        md_path = root / "reporte.md"
-        from utils.write_markdown import _write_markdown
-
+        if isinstance(report_data, str):   
+            clean = re.sub(r"```json|```", "", report_data).strip() 
+            report_data = json.loads(clean)
+        md_path = root / f"reporte_{month}_{year}.docx"
+        # from utils.write_markdown import _write_markdown
+        from service.word_service import WordService
         with Progress(
             SpinnerColumn(style="green"),
             TextColumn("[bold green]Construyendo documento markdown...[/bold green]"),
             transient=True,
             console=console,
         ) as progress:
-            progress.add_task("markdown", total=None)
-            _write_markdown(report_data, md_path)
+            # progress.add_task("markdown", total=None)
+            # _write_markdown(report_data, md_path
+            WordService(report_data).build().save(str(md_path))
         console.print(
             f"[bold green]✅ Reporte generado en:[/bold green] [cyan]{md_path}[/cyan]"
         )
@@ -191,6 +196,8 @@ def generate_content(
         console.print(f"[bold red]❌ Error ejecutando git:[/bold red]\n{e.stderr}")
     except json.JSONDecodeError as e:
         console.print(f"[bold red]❌ Error parseando commits:[/bold red]\n{e}")
+    except RuntimeError as e:
+        console.print(f"[bold red]❌ Error generando el reporte con IA:[/bold red]\n{e}")
     
 
 
@@ -213,8 +220,8 @@ def show_version():
     """
     Muestra la versión de la herramienta.
     """
-    console.print("\n[bold cyan]git-report-cli[/bold cyan] v1.0.0")
-    console.print("Generador de reportes Git con IA\n")
+    console.print(f"\n[bold cyan]{APP_NAME}[/bold cyan] v{VERSION}")
+    console.print(f"{APP_DESCRIPTION}\n")
 
 
 @app.command("help")
