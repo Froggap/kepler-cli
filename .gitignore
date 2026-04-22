@@ -1,13 +1,76 @@
+# --- Environment & Credentials ---
 .env
-
-/prompts/generate_summary.md
-/config/config_impl.py
-test.py
 .venv/
+venv/
+ENV/
+env/
 
+# --- Kepler Specific ---
+# Ignore user-defined prompts but keep examples
+prompts/generate_summary.md
+!prompts/generate_summary.example.md
+
+# Ignore local cache and generated reports
 commits.json
+/prompts/commits.json
+reporte_*.docx
 reporte.md
 
+# --- Python General ---
 __pycache__/
-*.pyc
-*.pyo
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- Testing & Coverage ---
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# --- IDEs & Editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
+
+# --- Operating System ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Misc ---
+test.py
+.tmp-*/
+*.tmp

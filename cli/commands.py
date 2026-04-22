@@ -68,9 +68,13 @@ def generate_content(
     ),
 ):
     "Genera un reporte de commits."
+    from config.config_impl import Config
+
     console.print(f"\n[bold cyan]Generando reporte de commits...[/bold cyan]\n")
     target_dir = working_dir or Path.cwd()
-    root = Path(__file__).parent.parent
+    commits_output_path = Config.get_commits_cache_path()
+    reports_output_dir = Config.get_output_path()
+    reports_output_dir.mkdir(parents=True, exist_ok=True)
 
     console.print("[bold]🔍 Filtros aplicados:[/bold]")
     console.print(f"  - Rama:   [green]{branch or 'Actual'}[/green]")
@@ -142,7 +146,7 @@ def generate_content(
             )
             return
 
-        output_path = root / "commits.json"
+        output_path = commits_output_path
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         console.print(
@@ -176,7 +180,7 @@ def generate_content(
         if isinstance(report_data, str):   
             clean = re.sub(r"```json|```", "", report_data).strip() 
             report_data = json.loads(clean)
-        md_path = root / f"reporte_{month}_{year}.docx"
+        md_path = reports_output_dir / f"reporte_{month}_{year}.docx"
         # from utils.write_markdown import _write_markdown
         from service.word_service import WordService
         with Progress(
@@ -201,18 +205,133 @@ def generate_content(
     
 
 
-@app.command("config")
-def show_config():
+@app.command("config-status", hidden=True)
+def show_config(
+    set_key: bool = typer.Option(
+        False,
+        "--set-key",
+        help="Guardar la API key de Gemini en el almacenamiento seguro del sistema.",
+    ),
+    clear_key: bool = typer.Option(
+        False,
+        "--clear-key",
+        help="Eliminar la API key guardada en el almacenamiento seguro del sistema.",
+    ),
+    model: Optional[str] = typer.Option(
+        None,
+        "--model",
+        help="Actualizar el modelo de Gemini que usa Kepler.",
+    ),
+    output_path: Optional[Path] = typer.Option(
+        None,
+        "--output-path",
+        help="Actualizar la carpeta donde se guardan los reportes.",
+    ),
+):
     """
     Muestra la configuración actual de la herramienta.
     """
-    from config.config import Config
+    from config.config_impl import Config
 
     console.print("\n[bold cyan]⚙️  Configuración actual:[/bold cyan]")
     console.print(
         f"  🔑 API Key configurada: {'✅ Sí' if Config.has_api_key() else '❌ No'}"
     )
     console.print(f"  📝 Modelo IA: {Config.get_model_name()}\n")
+
+
+@app.command("config")
+def configure_cli(
+    set_key: bool = typer.Option(
+        False,
+        "--set-key",
+        help="Guardar la API key de Gemini en el almacenamiento seguro del sistema.",
+    ),
+    clear_key: bool = typer.Option(
+        False,
+        "--clear-key",
+        help="Eliminar la API key guardada en el almacenamiento seguro del sistema.",
+    ),
+    model: Optional[str] = typer.Option(
+        None,
+        "--model",
+        help="Actualizar el modelo de Gemini que usa Kepler.",
+    ),
+    output_path: Optional[Path] = typer.Option(
+        None,
+        "--output-path",
+        help="Actualizar la carpeta donde se guardan los reportes.",
+    ),
+):
+    """
+    Muestra y actualiza la configuracion segura del CLI.
+    """
+    from config.config_impl import Config
+
+    set_key = set_key if isinstance(set_key, bool) else False
+    clear_key = clear_key if isinstance(clear_key, bool) else False
+    model = model if isinstance(model, str) else None
+    output_path = output_path if isinstance(output_path, Path) else None
+
+    should_prompt_for_key = set_key
+
+    if clear_key:
+        Config.delete_api_key()
+        console.print(
+            "[bold yellow]API key eliminada del almacenamiento seguro del sistema.[/bold yellow]"
+        )
+
+    if model:
+        Config.set_model(model.strip())
+        console.print(
+            f"[bold green]Modelo actualizado:[/bold green] {Config.get_model_name()}"
+        )
+
+    if output_path:
+        Config.set_output_path(str(output_path))
+        console.print(
+            f"[bold green]Ruta de reportes actualizada:[/bold green] {Config.get_output_path()}"
+        )
+
+    if not any([set_key, clear_key, model, output_path]) and not Config.has_api_key():
+        should_prompt_for_key = typer.confirm(
+            "No hay API key configurada. Deseas guardarla ahora?",
+            default=True,
+        )
+
+    if should_prompt_for_key:
+        api_key = typer.prompt(
+            "Pega tu API key de Gemini",
+            hide_input=True,
+            confirmation_prompt=True,
+        ).strip()
+        try:
+            Config.set_api_key(api_key)
+        except (RuntimeError, ValueError) as exc:
+            console.print(f"[bold red]No se pudo guardar la API key:[/bold red] {exc}")
+            raise typer.Exit(code=1)
+
+        console.print(
+            "[bold green]API key guardada de forma segura en el sistema.[/bold green]"
+        )
+
+    data = Config.all()
+    source_labels = {
+        "system": "almacenamiento seguro del sistema",
+        "env": "variable de entorno (.env)",
+        None: "sin configurar",
+    }
+
+    console.print("\n[bold cyan]Configuracion actual:[/bold cyan]")
+    console.print(f"  API Key configurada: {'Si' if data['has_api_key'] else 'No'}")
+    console.print(
+        f"  Origen API Key: {source_labels.get(data.get('api_key_source'), 'desconocido')}"
+    )
+    console.print(f"  Modelo IA: {Config.get_model_name()}")
+    console.print(f"  Ruta reportes: {Config.get_output_path()}")
+    console.print(f"  Cache commits: {Config.get_commits_cache_path()}")
+    console.print("  Tip: usa 'kepler config --set-key' para guardar tu token de Gemini.")
+    console.print("  Tip: usa 'kepler config --output-path <ruta>' para cambiar la carpeta de reportes.\n")
 
 
 @app.command("version")
@@ -250,6 +369,15 @@ def show_help(
         )
         print(
             "[bold] help [/bold] - Este comando muestra ayuda detallada de un comando específico. Puedes usarlo para obtener información sobre cómo usar otros comandos, por ejemplo: 'kepler help generate' para obtener ayuda sobre el comando generate."
+        )
+        print(
+            "Usa 'kepler config --set-key' para guardar tu token de Gemini de forma segura."
+        )
+        print(
+            "Usa 'kepler config --output-path <ruta>' para cambiar la carpeta donde se guardan los reportes."
+        )
+        print(
+            "Los commits se guardan en el cache de Kepler y se sobrescriben en cada nueva ejecucion."
         )
 
 

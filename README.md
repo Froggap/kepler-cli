@@ -40,7 +40,7 @@ Kepler CLI is a command-line tool designed to:
 
 ## 🛠️ Environment Setup
 
-Before running the CLI, you need to set up your environment variables. Create a `.env` file in the root directory:
+Before running the CLI, you can set environment variables in a `.env` file in the root directory:
 
 ```env
 # Google Gemini API Key (Required)
@@ -63,10 +63,11 @@ EMPLOYEE_NAME=Your Name
 The project uses a structured configuration system located in `config/`. It handles API authentication, model selection, and report settings. Environment variables are supported for development, and persistent configuration support is available through `config_impl.py`.
 
 ### 🧠 AI Prompts
-The core logic for report generation relies on Markdown templates. 
-* **Default Prompt:** The system reads from `prompts/generate_summary.md` by default. **You must ensure this file exists.**
-* **Customization:** You can modify this file to change how the AI summarizes your commits, the tone of the report, or the specific sections required. 
-* **Variables:** The prompt template supports dynamic placeholders like `{commits_data}`, `{period_month}`, and `{company_name}` which are replaced during execution.
+The core logic for report generation relies on Markdown templates.
+* **Custom Prompt:** If present, the CLI reads `prompts/generate_summary.md`.
+* **Fallback Template:** If that file does not exist, Kepler uses `prompts/generate_summary.example.md`.
+* **Customization:** Create your own `prompts/generate_summary.md` following the structure of the example file.
+* **Variables:** The prompt template supports placeholders like `{commits_data}`, `{period_month}`, `{company_name}`, `{employee_name}`, and `{project_name}`.
 
 ---
 
@@ -85,21 +86,27 @@ The core logic for report generation relies on Markdown templates.
 
 ```
 cli-kepler/
-├── cli/
-│   ├── welcome.py
-│   └── commands.py
-├── config/
-│   ├── config.py
-│   └── prompt_config.py
-├── prompts/
-│   └── generate_summary.md
-├── service/
-│   └── ai_service.py
-├── utils/
+├── cli/                # CLI logic and interface
+│   ├── app_info.py     # Version and app metadata
+│   ├── commands.py     # Command definitions
+│   ├── entrypoint.py   # Main CLI execution flow
+│   └── welcome.py      # Welcome messages and UI
+├── config/             # Configuration management
+│   ├── config.py       # Config interfaces
+│   ├── config_impl.py  # Implementation of persistent config
+│   └── prompt_config.py # AI prompt loading logic
+├── prompts/            # AI Prompt templates
+│   ├── generate_summary.example.md
+│   └── generate_summary.md (optional, user-defined)
+├── service/            # Core business logic
+│   ├── ai_service.py   # Gemini AI integration
+│   └── word_service.py # Word report (.docx) generation
+├── utils/              # Helper functions
 │   ├── date_util.py
 │   ├── git_util.py
 │   └── write_markdown.py
-├── main.py
+├── main.py             # Entry point script
+├── pyproject.toml      # Project dependencies and packaging
 └── README.md
 ```
 
@@ -107,43 +114,87 @@ cli-kepler/
 
 ## 🧠 How It Works
 
-1. User navigates to a project directory
-2. CLI detects Git repository
-3. Extracts commit history from the specified period
-4. Processes commits and sends them to Gemini AI using the template in `prompts/generate_summary.md`
-5. AI generates a structured summary (JSON)
-6. CLI converts the data into a professional Word report (`.docx`)
+1. User navigates to a project directory.
+2. CLI detects Git repository.
+3. Extracts commit history from the specified period.
+4. Processes commits and sends them to Gemini AI using the template in `prompts/generate_summary.md`.
+5. AI generates a structured summary (JSON).
+6. CLI converts the data into a professional Word report (`.docx`) using the `word_service`.
 
 ---
 
-## ⚡ Installation
+## ⚡ Guía de Instalación (Usuario Final)
+
+Si no eres desarrollador y solo quieres usar Kepler para tus reportes, sigue estos pasos:
+
+### 1. Requisitos Previos
+*   **Python 3.10 o superior:** [Descárgalo aquí](https://www.python.org/downloads/). **IMPORTANTE:** Durante la instalación en Windows, marca la casilla que dice **"Add Python to PATH"**.
+*   **Git:** [Descárgalo aquí](https://git-scm.com/downloads). Es necesario para que Kepler pueda leer tus commits.
+
+### 2. Instalación de Kepler
+Abre una terminal (PowerShell o CMD en Windows) y ejecuta:
 
 ```bash
-# Clone repository
+pip install git+https://github.com/Froggap/kepler-cli.git
+```
+
+### 3. Configuración Inicial (Obligatorio)
+Para que Kepler pueda usar la IA de Google Gemini, necesitas configurar tu API Key:
+
+1.  Obtén una API Key gratuita en [Google AI Studio](https://aistudio.google.com/app/apikey).
+2.  En tu terminal, ejecuta:
+    ```bash
+    kepler config --set-key
+    ```
+3.  Pega tu clave cuando se te solicite (no se verá mientras escribes por seguridad).
+
+---
+
+## 🛠️ Solución de Problemas y Notas Importantes
+
+### 1. "kepler" no se reconoce como comando interno
+Si tras instalarlo el comando falla, es porque la carpeta de Scripts de Python no esté en tus variables de entorno.
+*   **Solución:** Busca donde se instaló Python (usualmente `C:\Users\TU_USUARIO\AppData\Roaming\Python\Python3x\Scripts`) y añade esa ruta al PATH de tu sistema.
+
+### 2. Conflictos con OneDrive y carpetas sincronizadas
+Si trabajas dentro de carpetas de **OneDrive**, **Dropbox** o **Google Drive**:
+*   **Bloqueo de archivos:** Estas herramientas pueden bloquear el archivo `.docx` mientras intentan sincronizarlo, causando que Kepler falle al guardar el reporte.
+*   **Rutas demasiado largas:** OneDrive tiende a crear rutas muy largas que superan el límite de Windows (260 caracteres).
+*   **Recomendación:** Ejecuta Kepler en proyectos ubicados en rutas locales directas como `C:\Proyectos\mi-repo`.
+
+### 3. Error de Almacenamiento Seguro (Keyring)
+Kepler guarda tu API Key en el "Administrador de Credenciales" de Windows para que no tengas que escribirla siempre.
+*   Si recibes un error relacionado con `keyring` o `backend`, asegúrate de tener permisos de administrador o intenta definir la clave directamente en un archivo `.env` en la carpeta donde ejecutas el comando:
+    ```env
+    GEMINI_API_KEY=tu_clave_aqui
+    ```
+
+### 4. Ejecución en Repositorios Git
+Kepler **debe** ejecutarse dentro de la carpeta de un repositorio Git. Si la carpeta no tiene un `.git`, el comando `generate` fallará porque no encontrará historial que analizar.
+
+---
+
+## 🛠️ Para Desarrolladores (Instalación Local)
+Si deseas contribuir o personalizar el comportamiento:
+
+```bash
 git clone https://github.com/Froggap/kepler-cli.git
-
-# Enter project
 cd kepler-cli
-
-# Create virtual environment
 python -m venv venv
+# Windows:
+.\venv\Scripts\activate
+# Linux/macOS:
+source venv/bin/activate
 
-# Activate (Windows)
-venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up your .env file
-# (Create manually or copy from an example if available)
+pip install -e .
 ```
 
 ---
 
-## ▶️ Usage
+## ▶️ Uso
 
 ```bash
-python main.py
+kepler
 ```
 
 Then use commands like:
@@ -151,6 +202,13 @@ Then use commands like:
 ```bash
 cd your-project
 generate
+```
+
+You can also run configuration directly:
+
+```bash
+kepler config --set-key
+kepler config --output-path C:\Users\YourUser\Documents\Reports
 ```
 
 Generated artifacts:

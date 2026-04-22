@@ -101,6 +101,12 @@ def show_cli_help():
     )
     cli_table.add_row("config",   "Muestra la configuración actual.")
     cli_table.add_row("version",  "Muestra la versión de la herramienta.")
+    cli_table.add_row(
+        "config ej.",
+        "Usa [yellow]config --set-key[/yellow] para guardar tu token y "
+        "[yellow]config --output-path <ruta>[/yellow] para cambiar donde se guardan los reportes.\n"
+        "[dim]Los commits siempre se guardan en el cache de Kepler y se reemplazan en cada ejecucion.[/dim]"
+    )
     cli_table.add_row("help",     "Muestra esta ayuda.")
     cli_table.add_row("exit",     "Sale del CLI.")
 
@@ -175,14 +181,30 @@ def request_permissions():
 
 def is_safe_command(cmd: str) -> bool:
     """Verifica si un comando es seguro de ejecutar."""
+    cmd = _normalize_user_command(cmd)
+    if not cmd:
+        return False
     base = cmd.strip().split()[0].lower().rstrip(".exe")
     return base in ALLOWED_COMMANDS
+
+
+def _normalize_user_command(cmd: str) -> str:
+    """Elimina el prefijo del CLI cuando el usuario lo escribe dentro del prompt."""
+    cmd = cmd.strip()
+    if not cmd:
+        return cmd
+
+    parts = cmd.split(maxsplit=1)
+    if parts[0].lower() == "kepler":
+        return parts[1].strip() if len(parts) > 1 else ""
+
+    return cmd
 
 
 def execute_terminal_command(cmd: str):
     """Ejecuta un comando del sistema de forma segura."""
     global current_directory
-    cmd = cmd.strip()
+    cmd = _normalize_user_command(cmd)
     if not cmd:
         return
 
@@ -270,7 +292,11 @@ def handle_menu_choice(choice: str, extra_args: list = []):
     console.print(f"\n[bold cyan]Ejecutando comando: {choice}[/bold cyan]\n")
 
     if choice == "config":
-        app(prog_name="kepler", args=["config"], standalone_mode=False)
+        app(
+            prog_name="kepler",
+            args=["config"] + extra_args,
+            standalone_mode=False,
+        )
     elif choice == "version":
         app(prog_name="kepler", args=["version"], standalone_mode=False)
     elif choice == "help":
@@ -300,7 +326,7 @@ def show_welcome_menu():
     while True:
         console.print()
 
-        from config.config import Config
+        from config.config_impl import Config
 
         if not Config.has_api_key():
             console.print(

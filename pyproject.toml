@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kepler-cli"
+dynamic = ["version"]
+description = "CLI tool to generate professional monthly reports from Git activity using AI."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "Froggap" }
+]
+dependencies = [
+  "google-genai>=1.61.0",
+  "keyring>=25.0.0",
+  "prompt-toolkit>=3.0.0",
+  "python-docx>=1.1.0",
+  "python-dotenv>=1.0.0",
+  "rich>=13.0.0",
+  "typer>=0.12.0",
+]
+
+[project.scripts]
+kepler = "cli.entrypoint:main"
+
+[tool.setuptools.packages.find]
+include = ["cli*", "config*", "prompts*", "service*", "utils*"]
+
+[tool.setuptools.package-data]
+prompts = ["*.md"]
+
+[tool.setuptools.dynamic]
+version = { attr = "cli.app_info.VERSION" }

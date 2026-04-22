@@ -1,25 +1,5 @@
-import os
-from dotenv import load_dotenv
+"""Compatibilidad hacia atras para importar Config desde config.config."""
 
-load_dotenv()
+from config.config_impl import Config
 
-
-class Config:    
-    @staticmethod
-    def get_api_key() -> str:
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError(
-                "GEMINI_API_KEY no configurada. "
-                "Agrégala a tu archivo .env"
-            )
-        return api_key
-    
-    @staticmethod
-    def has_api_key() -> bool:
-        return bool(os.getenv("GEMINI_API_KEY"))
-    
-    @staticmethod
-    def get_model_name() -> str:
-        return os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-    
+__all__ = ["Config"]

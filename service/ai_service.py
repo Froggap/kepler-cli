@@ -1,18 +1,22 @@
 import json
 import time
+from importlib.resources import files
 from pathlib import Path
 from typing import Dict, List, Optional
 
 from google import genai
 from google.genai import errors, types
 from datetime import datetime
-from config.config import Config
+from config.config_impl import Config
 
 
 class AIReportService:
     """Servicio para generar reportes mensuales usando Gemini."""
 
-    PROMPT_PATH = Path("prompts/generate_summary.md")
+    PROMPT_PACKAGE = "prompts"
+    PROMPT_NAME = "generate_summary.md"
+    PROMPT_EXAMPLE_NAME = "generate_summary.example.md"
+    PROMPT_DIR = Path(__file__).resolve().parent.parent / "prompts"
     MAX_RETRIES = 5
     INITIAL_BACKOFF_SECONDS = 2
 
@@ -79,9 +83,17 @@ class AIReportService:
         ) from last_error
 
     def _load_prompt(self, **kwargs) -> str:
-        if not self.PROMPT_PATH.exists():
-            raise FileNotFoundError(f"No se encontró el prompt en: {self.PROMPT_PATH}")
-        template = self.PROMPT_PATH.read_text(encoding="utf-8")
+        custom_prompt_path = self.PROMPT_DIR / self.PROMPT_NAME
+        if custom_prompt_path.exists():
+            template = custom_prompt_path.read_text(encoding="utf-8")
+        else:
+            example_path = self.PROMPT_DIR / self.PROMPT_EXAMPLE_NAME
+            if example_path.exists():
+                template = example_path.read_text(encoding="utf-8")
+            else:
+                template = files(self.PROMPT_PACKAGE).joinpath(
+                    self.PROMPT_EXAMPLE_NAME
+                ).read_text(encoding="utf-8")
     
         for key, value in kwargs.items():
             template = template.replace("{" + key + "}", str(value))
