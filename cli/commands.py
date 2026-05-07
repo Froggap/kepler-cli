@@ -302,8 +302,7 @@ def configure_cli(
     if should_prompt_for_key:
         api_key = typer.prompt(
             "Pega tu API key de Gemini",
-            hide_input=True,
-            confirmation_prompt=True,
+            # hide_input=True,
         ).strip()
         try:
             Config.set_api_key(api_key)
