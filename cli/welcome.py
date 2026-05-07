@@ -215,6 +215,16 @@ def execute_terminal_command(cmd: str):
       extra_args = parts[1:]
       handle_menu_choice(base_cmd, extra_args)
       return
+    
+    if not request_permissions():
+        console.print("[yellow]Comando cancelado. Sin permisos del sistema.[/yellow]")
+        return
+    if not is_safe_command(cmd):
+        console.print(
+            f"[bold red]⛔ Comando no permitido:[/bold red] [yellow]{base_cmd}[/yellow]\n"
+            f"[dim]Comandos disponibles: {', '.join(sorted(ALLOWED_COMMANDS))}[/dim]"
+        )
+        return
 
     if base_cmd == "cd":
         if len(parts) < 2 or parts[1].strip() in ("~", ""):
@@ -253,15 +263,6 @@ def execute_terminal_command(cmd: str):
 
     if base_cmd in ("pwd", "cd"):
         console.print(f"[cyan]📂 {current_directory}[/cyan]")
-        return
-    if not request_permissions():
-        console.print("[yellow]Comando cancelado. Sin permisos del sistema.[/yellow]")
-        return
-    if not is_safe_command(cmd):
-        console.print(
-            f"[bold red]⛔ Comando no permitido:[/bold red] [yellow]{base_cmd}[/yellow]\n"
-            f"[dim]Comandos disponibles: {', '.join(sorted(ALLOWED_COMMANDS))}[/dim]"
-        )
         return
     if base_cmd == "ls":
         command = "dir " + (parts[1] if len(parts) > 1 else "")
