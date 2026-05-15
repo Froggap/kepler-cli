@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 import subprocess
 import json
+import sys
 import re
 from cli.app_info import APP_DESCRIPTION, APP_NAME, VERSION
 
@@ -202,43 +203,108 @@ def generate_content(
         console.print(f"[bold red]❌ Error parseando commits:[/bold red]\n{e}")
     except RuntimeError as e:
         console.print(f"[bold red]❌ Error generando el reporte con IA:[/bold red]\n{e}")
-    
+        
 
-
-@app.command("config-status", hidden=True)
-def show_config(
-    set_key: bool = typer.Option(
-        False,
-        "--set-key",
-        help="Guardar la API key de Gemini en el almacenamiento seguro del sistema.",
-    ),
-    clear_key: bool = typer.Option(
-        False,
-        "--clear-key",
-        help="Eliminar la API key guardada en el almacenamiento seguro del sistema.",
-    ),
-    model: Optional[str] = typer.Option(
-        None,
-        "--model",
-        help="Actualizar el modelo de Gemini que usa Kepler.",
-    ),
-    output_path: Optional[Path] = typer.Option(
-        None,
-        "--output-path",
-        help="Actualizar la carpeta donde se guardan los reportes.",
-    ),
-):
+@app.command("uninstall")
+def uninstall_cli():
     """
-    Muestra la configuración actual de la herramienta.
+    Desinstala el CLI de Kepler.
     """
-    from config.config_impl import Config
+    if not typer.confirm(f"¿Estás seguro de que deseas desinstalar {APP_NAME}? Se eliminarán las configuraciones guardadas."):
+        raise typer.Exit()
 
-    console.print("\n[bold cyan]⚙️  Configuración actual:[/bold cyan]")
-    console.print(
-        f"  🔑 API Key configurada: {'✅ Sí' if Config.has_api_key() else '❌ No'}"
+    from cli.uninstall import handle_uninstall
+
+    with Progress(
+        SpinnerColumn(style="red"),
+        TextColumn(f"[bold red]Eliminando configuraciones...[/bold red]"),
+        transient=True,
+        console=console,
+    ) as progress:
+        progress.add_task("uninstall", total=None)
+        handle_uninstall() 
+
+    uninstall_script = (
+        f"import subprocess, sys;"
+        f"r = subprocess.run("
+        f"[sys.executable, '-m', 'pip', 'uninstall', '{APP_NAME}', '-y'],"
+        f"capture_output=True, text=True);"
+        f"print('✅ Kepler desinstalado correctamente.' if r.returncode == 0 else f'❌ Error: {{r.stderr}}')"
     )
-    console.print(f"  📝 Modelo IA: {Config.get_model_name()}\n")
 
+    console.print(f"[yellow]⚡ Desinstalando {APP_NAME}...[/yellow]")
+    console.print("[dim]Nota: El ejecutable se eliminará al cerrar esta terminal.[/dim]")
+
+    platform = sys.platform
+
+    if platform == "win32":
+        subprocess.Popen(
+            [sys.executable, "-c", uninstall_script],
+            creationflags=subprocess.CREATE_NEW_CONSOLE,
+            close_fds=True,
+        )
+    else:
+        subprocess.Popen(
+            [sys.executable, "-c", uninstall_script],
+            start_new_session=True,
+        )
+
+    sys.exit(0)
+
+@app.command("update")
+def update_cli():
+    """
+    Busca y descarga la última versión de Kepler desde GitHub.
+    """
+    REPO_URL = "git+https://github.com/Froggap/kepler-cli.git"
+
+    with Progress(
+        SpinnerColumn(style="blue"),
+        TextColumn("[bold blue]Buscando actualizaciones...[/bold blue]"),
+        transient=True,
+        console=console,
+    ) as progress:
+        progress.add_task("update", total=None)
+
+        # 1. Verificar si hay actualización disponible primero (sin instalar)
+        check = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "--dry-run", "--upgrade", REPO_URL],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+    already_updated = "Requirement already satisfied" in check.stdout + check.stderr
+
+    if already_updated:
+        console.print(f"[bold green]✅ Ya tienes la versión más reciente (v{VERSION}).[/bold green]")
+        return
+
+    console.print(f"[yellow]⚡ Instalando actualización en segundo plano...[/yellow]")
+    console.print("[yellow]Cierra y vuelve a abrir tu terminal cuando termine.[/yellow]")
+
+    update_script = (
+        f"import subprocess, sys;"
+        f"r = subprocess.run("
+        f"[sys.executable, '-m', 'pip', 'install', '--upgrade', '{REPO_URL}'],"
+        f"capture_output=True, text=True);"
+        f"print('✨ Kepler actualizado correctamente.' if r.returncode == 0 else f'❌ Error: {{r.stderr}}')"
+    )
+
+    platform = sys.platform
+
+    if platform  == "win32":
+        subprocess.Popen(
+            [sys.executable, "-c", update_script],
+            creationflags=subprocess.CREATE_NEW_CONSOLE,
+            close_fds=True,
+        )
+    else:
+        subprocess.Popen(
+            [sys.executable, "-c", update_script],
+            start_new_session=True,
+        )
+    sys.exit(0)    
 
 @app.command("config")
 def configure_cli(

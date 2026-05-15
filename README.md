@@ -79,6 +79,7 @@ The core logic for report generation relies on Markdown templates.
 | config   | Show current configuration   |
 | version  | Show CLI version             |
 | help     | Show help menu               |
+| uninstall | Remove local configuration and uninstall package |
 
 ---
 
@@ -224,6 +225,28 @@ Current additions related to report generation:
 * `service/word_service.py`
 
 ---
+
+## 🔧 Desinstalación
+
+Si deseas eliminar la configuración local y desinstalar el paquete, tienes dos opciones:
+
+1. Usar el comando interactivo dentro del CLI:
+
+```bash
+kepler uninstall
+```
+
+Este comando ofrece opciones para eliminar la API key guardada, la cache de commits (`~/.kepler/commits.json`), los reportes generados y, opcionalmente, ejecutar `pip uninstall kepler-cli`.
+
+2. Desinstalación manual:
+
+```bash
+pip uninstall kepler-cli
+# y, si deseas limpiar la configuración local:
+rm -rf ~/.kepler
+```
+
+Ten cuidado al eliminar `~/.kepler` ya que contiene las opciones persistentes y el cache de commits.
 
 ## 📌 Notes
 

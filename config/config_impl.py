@@ -5,10 +5,10 @@ from pathlib import Path
 import keyring
 from keyring.errors import KeyringError
 from dotenv import load_dotenv
-
+from cli.app_info import APP_NAME
 load_dotenv()
 
-APP_NAME = "kepler-cli"
+APP_NAME = APP_NAME
 CONFIG_DIR = Path.home() / ".kepler"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 

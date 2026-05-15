@@ -75,6 +75,12 @@ def show_commands_table():
     table.add_row("config", "Muestra la configuración actual del CLI", "config")
     table.add_row("version", "Muestra la versión de la herramienta", "version")
     table.add_row(
+        "uninstall",
+        "Desinstala completamente Kepler de tu sistema",
+        "uninstall",
+    )
+    table.add_row("update", "Busca y descarga la última versión de Kepler", "update")
+    table.add_row(
         "help", "Muestra ayuda detallada de un comando", "help"
     )
 
@@ -210,7 +216,7 @@ def execute_terminal_command(cmd: str):
 
     parts = cmd.split(maxsplit=1)
     base_cmd = parts[0].lower()
-    if base_cmd in ["config", "version", "help", "generate"]:
+    if base_cmd in ["config", "version", "help", "generate", "uninstall", "update"]:
       parts=cmd.split()
       extra_args = parts[1:]
       handle_menu_choice(base_cmd, extra_args)
@@ -302,6 +308,10 @@ def handle_menu_choice(choice: str, extra_args: list = []):
         app(prog_name="kepler", args=["version"], standalone_mode=False)
     elif choice == "help":
         show_cli_help()
+    elif choice == "uninstall":
+        app(prog_name="kepler", args=["uninstall"], standalone_mode=False)    
+    elif choice == "update":
+        app(prog_name="kepler", args=["update"], standalone_mode=False)
     elif choice == "generate":
         app(
             prog_name="kepler",
