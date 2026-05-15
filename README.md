@@ -149,6 +149,12 @@ Para que Kepler pueda usar la IA de Google Gemini, necesitas configurar tu API K
     ```
 3.  Pega tu clave cuando se te solicite (no se verá mientras escribes por seguridad).
 
+### 4. Actualización
+Para actualizar Kepler a la última versión sin perder tu configuración, simplemente ejecuta:
+```bash
+kepler update
+```
+
 ---
 
 ## 🛠️ Solución de Problemas y Notas Importantes
