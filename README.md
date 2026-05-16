@@ -10,12 +10,22 @@ A custom CLI tool to generate professional monthly work reports from your Git ac
 
 Kepler CLI is a command-line tool designed to:
 
-* Navigate your local file system safely
-* Detect and work with Git repositories
-* Extract commit history
-* Transform commits into structured data (JSON) using AI
-* Generate monthly reports in Word (`.docx`)
-* Use AI to enhance and summarize development activity
+# 🚀 Kepler CLI
+
+A custom CLI tool to generate professional monthly work reports from your Git activity using AI.
+
+---
+
+## 📌 Description
+
+Kepler CLI is a command-line tool designed to:
+
+- Navigate your local file system safely
+- Detect and work with Git repositories
+- Extract commit history
+- Transform commits into structured data (JSON) using AI
+- Generate monthly reports in Word (`.docx`)
+- Use AI to enhance and summarize development activity
 
 ---
 
@@ -23,18 +33,18 @@ Kepler CLI is a command-line tool designed to:
 
 ### ✅ Implemented
 
-* Interactive CLI interface
-* Custom command system
-* Safe terminal command execution
-* Directory navigation (`cd`, `ls`, `pwd`, etc.)
-* Permission control for system access
-* Git commit extraction
-* AI integration for commit analysis and summarizing
-* **Monthly report generation in Word (`.docx`)**
+- Interactive CLI interface
+- Custom command system
+- Safe terminal command execution
+- Directory navigation (`cd`, `ls`, `pwd`, etc.)
+- Permission control for system access
+- Git commit extraction
+- AI integration for commit analysis and summarizing
+- **Monthly report generation in Word (`.docx`)**
 
 ### 🚧 In Progress
 
-* Smart filtering of commits
+- Smart filtering of commits
 
 ---
 
@@ -64,10 +74,10 @@ The project uses a structured configuration system located in `config/`. It hand
 
 ### 🧠 AI Prompts
 The core logic for report generation relies on Markdown templates.
-* **Custom Prompt:** If present, the CLI reads `prompts/generate_summary.md`.
-* **Fallback Template:** If that file does not exist, Kepler uses `prompts/generate_summary.example.md`.
-* **Customization:** Create your own `prompts/generate_summary.md` following the structure of the example file.
-* **Variables:** The prompt template supports placeholders like `{commits_data}`, `{period_month}`, `{company_name}`, `{employee_name}`, and `{project_name}`.
+- **Custom Prompt:** If present, the CLI reads `prompts/generate_summary.md`.
+- **Fallback Template:** If that file does not exist, Kepler uses `prompts/generate_summary.example.md`.
+- **Customization:** Create your own `prompts/generate_summary.md` following the structure of the example file.
+- **Variables:** The prompt template supports placeholders like `{commits_data}`, `{period_month}`, `{company_name}`, `{employee_name}`, and `{project_name}`.
 
 ---
 
@@ -124,65 +134,65 @@ cli-kepler/
 
 ---
 
-## ⚡ Guía de Instalación (Usuario Final)
+## ⚡ Installation Guide (End User)
 
-Si no eres desarrollador y solo quieres usar Kepler para tus reportes, sigue estos pasos:
+If you are not a developer and just want to use Kepler to generate reports, follow these steps:
 
-### 1. Requisitos Previos
-*   **Python 3.10 o superior:** [Descárgalo aquí](https://www.python.org/downloads/). **IMPORTANTE:** Durante la instalación en Windows, marca la casilla que dice **"Add Python to PATH"**.
-*   **Git:** [Descárgalo aquí](https://git-scm.com/downloads). Es necesario para que Kepler pueda leer tus commits.
+### 1. Prerequisites
+- **Python 3.10 or newer:** https://www.python.org/downloads/. IMPORTANT: On Windows, check "Add Python to PATH" during installation.
+- **Git:** https://git-scm.com/downloads. Required for Kepler to read your commits.
 
-### 2. Instalación de Kepler
-Abre una terminal (PowerShell o CMD en Windows) y ejecuta:
+### 2. Install Kepler
+Open a terminal (PowerShell or CMD on Windows) and run:
 
 ```bash
 pip install git+https://github.com/Froggap/kepler-cli.git
 ```
 
-### 3. Configuración Inicial (Obligatorio)
-Para que Kepler pueda usar la IA de Google Gemini, necesitas configurar tu API Key:
+### 3. Initial Configuration (Required)
+Kepler needs a Google Gemini API key to use the AI features:
 
-1.  Obtén una API Key gratuita en [Google AI Studio](https://aistudio.google.com/app/apikey).
-2.  En tu terminal, ejecuta:
+1. Obtain an API Key from Google AI Studio: https://aistudio.google.com/app/apikey.
+2. In your terminal run:
     ```bash
     kepler config --set-key
     ```
-3.  Pega tu clave cuando se te solicite (no se verá mientras escribes por seguridad).
+3. Paste your key when prompted (input is hidden for security).
 
-### 4. Actualización
-Para actualizar Kepler a la última versión sin perder tu configuración, simplemente ejecuta:
+### 4. Update
+To update Kepler without losing your configuration, run:
 ```bash
 kepler update
 ```
 
 ---
 
-## 🛠️ Solución de Problemas y Notas Importantes
+## 🛠️ Troubleshooting & Important Notes
 
-### 1. "kepler" no se reconoce como comando interno
-Si tras instalarlo el comando falla, es porque la carpeta de Scripts de Python no esté en tus variables de entorno.
-*   **Solución:** Busca donde se instaló Python (usualmente `C:\Users\TU_USUARIO\AppData\Roaming\Python\Python3x\Scripts`) y añade esa ruta al PATH de tu sistema.
+### 1. "kepler" is not recognized as an internal command
+If the `kepler` command is not found after installation, the Python Scripts folder might not be in your system PATH.
+- **Solution:** Locate where Python installed scripts (usually `C:\Users\YOUR_USER\AppData\Roaming\Python\Python3x\Scripts`) and add that folder to your PATH environment variable.
 
-### 2. Conflictos con OneDrive y carpetas sincronizadas
-Si trabajas dentro de carpetas de **OneDrive**, **Dropbox** o **Google Drive**:
-*   **Bloqueo de archivos:** Estas herramientas pueden bloquear el archivo `.docx` mientras intentan sincronizarlo, causando que Kepler falle al guardar el reporte.
-*   **Rutas demasiado largas:** OneDrive tiende a crear rutas muy largas que superan el límite de Windows (260 caracteres).
-*   **Recomendación:** Ejecuta Kepler en proyectos ubicados en rutas locales directas como `C:\Proyectos\mi-repo`.
+### 2. Conflicts with OneDrive and synced folders
+If you work inside OneDrive, Dropbox, or Google Drive folders:
+- **File locking:** These services can lock the `.docx` file while syncing, causing Kepler to fail saving the report.
+- **Long paths:** OneDrive can create very long paths that exceed Windows path limits (260 characters).
+- **Recommendation:** Run Kepler on projects located in local paths such as `C:\Projects\my-repo`.
 
-### 3. Error de Almacenamiento Seguro (Keyring)
-Kepler guarda tu API Key en el "Administrador de Credenciales" de Windows para que no tengas que escribirla siempre.
-*   Si recibes un error relacionado con `keyring` o `backend`, asegúrate de tener permisos de administrador o intenta definir la clave directamente en un archivo `.env` en la carpeta donde ejecutas el comando:
+### 3. Secure Storage Error (Keyring)
+Kepler stores your API key in the Windows Credential Manager so you don't need to re-enter it each time.
+- If you get an error related to `keyring` or backend issues, ensure you have the proper permissions or set the key directly in a local `.env` file in the folder where you run the command:
     ```env
-    GEMINI_API_KEY=tu_clave_aqui
+    GEMINI_API_KEY=your_key_here
     ```
 
-### 4. Ejecución en Repositorios Git
-Kepler **debe** ejecutarse dentro de la carpeta de un repositorio Git. Si la carpeta no tiene un `.git`, el comando `generate` fallará porque no encontrará historial que analizar.
+### 4. Running Inside Git Repositories
+Kepler must be executed inside a Git repository. If the current folder does not contain a `.git` folder, the `generate` command will fail because there is no commit history to analyze.
 
 ---
 
-## 🛠️ Para Desarrolladores (Instalación Local)
-Si deseas contribuir o personalizar el comportamiento:
+## 🛠️ For Developers (Local Installation)
+If you want to contribute or customize the behavior:
 
 ```bash
 git clone https://github.com/Froggap/kepler-cli.git
@@ -198,7 +208,7 @@ pip install -e .
 
 ---
 
-## ▶️ Uso
+## ▶️ Usage
 
 ```bash
 kepler
@@ -222,52 +232,51 @@ Generated artifacts:
 
 ```bash
 commits.json
-reporte_<mes>_<año>.docx
+report_<month>_<year>.docx
 ```
 
 Current additions related to report generation:
 
-* `config/config_impl.py`
-* `service/word_service.py`
+- `config/config_impl.py`
+- `service/word_service.py`
 
 ---
 
-## 🔧 Desinstalación
+## 🔧 Uninstall
+If you want to remove local configuration and uninstall the package, you have two options:
 
-Si deseas eliminar la configuración local y desinstalar el paquete, tienes dos opciones:
-
-1. Usar el comando interactivo dentro del CLI:
+1. Use the interactive command inside the CLI:
 
 ```bash
 kepler uninstall
 ```
 
-Este comando ofrece opciones para eliminar la API key guardada, la cache de commits (`~/.kepler/commits.json`), los reportes generados y, opcionalmente, ejecutar `pip uninstall kepler-cli`.
+This command offers options to remove the stored API key, the commits cache (`~/.kepler/commits.json`), generated reports and, optionally, run `pip uninstall kepler-cli`.
 
-2. Desinstalación manual:
+2. Manual uninstall:
 
 ```bash
 pip uninstall kepler-cli
-# y, si deseas limpiar la configuración local:
+# and, if you want to clear local configuration:
 rm -rf ~/.kepler
 ```
 
-Ten cuidado al eliminar `~/.kepler` ya que contiene las opciones persistentes y el cache de commits.
+Be careful deleting `~/.kepler` as it contains persistent settings and the commits cache.
 
 ## 📌 Notes
 
-* The CLI only executes **safe read-only commands**
-* No source files are modified
-* Works best inside a Git repository
+- The CLI only executes **safe read-only commands**
+- No source files are modified
+- Works best inside a Git repository
 
 ---
 
 ## 🔮 Future Plans
 
-* Multi-language support
-* Better terminal UX (autocomplete, history)
-* Switch IA models
-* Generate and send reports by email
+- Multi-language support
+- Better terminal UX (autocomplete, history)
+- Switch AI models
+- Generate and send reports by email
 
 ---
 
