@@ -5,17 +5,6 @@
 A custom CLI tool to generate professional monthly work reports from your Git activity using AI.
 
 ---
-
-## 📌 Description
-
-Kepler CLI is a command-line tool designed to:
-
-# 🚀 Kepler CLI
-
-A custom CLI tool to generate professional monthly work reports from your Git activity using AI.
-
----
-
 ## 📌 Description
 
 Kepler CLI is a command-line tool designed to:
